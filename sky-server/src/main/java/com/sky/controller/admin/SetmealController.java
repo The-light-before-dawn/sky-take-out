@@ -35,7 +35,7 @@ public class SetmealController {
      */
     @PostMapping
     @ApiOperation("新增套餐")
-    public Result save(SetmealDTO setmealDTO) {
+    public Result save(@RequestBody SetmealDTO setmealDTO) {
         log.info("新增套餐:{}", setmealDTO);
 
         setmealService.saveWithDish(setmealDTO);
@@ -43,17 +43,17 @@ public class SetmealController {
     }
 
     /**
-     * 分页查询
+     * 套餐分页查询
      *
      * @param setmealPageQueryDTO
      * @return
      */
     @GetMapping("/page")
-    @ApiOperation("分页查询")
+    @ApiOperation("套餐分页查询")
     public Result<PageResult> page(SetmealPageQueryDTO setmealPageQueryDTO) {
+        log.info("套餐分页查询");
 
         PageResult pageResult = setmealService.pageQuery(setmealPageQueryDTO);
-
         return Result.success(pageResult);
     }
 
@@ -66,8 +66,9 @@ public class SetmealController {
     @DeleteMapping
     @ApiOperation("批量删除套餐")
     public Result delete(@RequestParam List<Long> ids) {
-        setmealService.deleteBatch(ids);
+        log.info("菜品批量删除:{}}", ids);
 
+        setmealService.deleteBatch(ids);
         return Result.success();
     }
 

@@ -17,10 +17,12 @@ import com.sky.mapper.SetmealDishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
 import com.sky.service.SetmealService;
+import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -38,6 +40,7 @@ public class SetmealServiceImpl implements SetmealService {
      * 新增套餐 同时需要保存套餐和菜品的关联关系
      * @param setmealDTO
      */
+    @Transactional
     public void saveWithDish(SetmealDTO setmealDTO) {
 
         Setmeal setmeal = new Setmeal();
@@ -46,7 +49,7 @@ public class SetmealServiceImpl implements SetmealService {
         // 向套餐表插入数据
         setmealMapper.insert(setmeal);
 
-        // 获取生成的套餐id
+        // 获取insert生成的套餐id
         Long setmealId = setmeal.getId();
 
         List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
@@ -64,10 +67,8 @@ public class SetmealServiceImpl implements SetmealService {
      * @return
      */
     public PageResult pageQuery(SetmealPageQueryDTO setmealPageQueryDTO) {
-
         int pageNum = setmealPageQueryDTO.getPage();
         int pageSize = setmealPageQueryDTO.getPageSize();
-
         PageHelper.startPage(pageNum, pageSize);
 
         Page<SetmealVO> page =  setmealMapper.pageQuery(setmealPageQueryDTO);
@@ -79,6 +80,7 @@ public class SetmealServiceImpl implements SetmealService {
      * 批量删除套餐
      * @param ids
      */
+    @Transactional
     public void deleteBatch(List<Long> ids) {
 
         ids.forEach(id -> {
@@ -105,8 +107,7 @@ public class SetmealServiceImpl implements SetmealService {
      */
     public SetmealVO getByIdWithDish(Long id) {
         Setmeal setmeal = setmealMapper.getById(id);
-        List<SetmealDish> setmealDishes =
-        setmealDishMapper.getBySetmealId(id);
+        List<SetmealDish> setmealDishes = setmealDishMapper.getBySetmealId(id);
 
         SetmealVO setmealVO = new SetmealVO();
         BeanUtils.copyProperties(setmeal, setmealVO);
@@ -164,5 +165,24 @@ public class SetmealServiceImpl implements SetmealService {
                 .status(status)
                 .build();
         setmealMapper.update(setmeal);
+    }
+
+    /**
+     * 条件查询
+     * @param setmeal
+     * @return
+     */
+    public List<Setmeal> list(Setmeal setmeal) {
+        List<Setmeal> list = setmealMapper.list(setmeal);
+        return list;
+    }
+
+    /**
+     * 根据id查询菜品选项
+     * @param id
+     * @return
+     */
+    public List<DishItemVO> getDishItemById(Long id) {
+        return setmealMapper.getDishItemBySetmealId(id);
     }
 }
