@@ -84,4 +84,13 @@
         order by create_time desc
         </select>
 
+    <update id="startOrStop">
+        update dish
+        <set>status = #{status}
+            <where>
+                id = #{id}
+            </where>
+        </set>
+    </update>
+
 </mapper>
