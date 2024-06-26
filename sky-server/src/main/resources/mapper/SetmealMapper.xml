@@ -32,7 +32,7 @@
         </select>
 
     <update id="update" parameterType="com.sky.entity.Setmeal">
-        update dish
+        update setmeal
         <set>
             <if test="name != null">
                 name = #{name},
