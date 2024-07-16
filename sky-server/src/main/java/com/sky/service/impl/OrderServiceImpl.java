@@ -194,39 +194,12 @@ public class OrderServiceImpl implements OrderService {
 
         log.info("调用updateStatus,用于替换微信支付更新数据库状态的问题");
         orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_time_out, orderNumber);
+
+        // 下单成功 发送消息 websocket
+        webSocketServer.sendToAllClient("下单成功");
         return vo;
     }
 
-    /**
-     * 支付成功，修改订单状态
-     *
-     * @param outTradeNo
-     */
-    public void paySuccess(String outTradeNo) {
-
-        // 根据订单号查询订单
-        Orders ordersDB = orderMapper.getByNumber(outTradeNo);
-
-        // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
-        Orders orders = Orders.builder()
-                .id(ordersDB.getId())
-                .status(Orders.TO_BE_CONFIRMED)
-                .payStatus(Orders.PAID)
-                .checkoutTime(LocalDateTime.now())
-                .build();
-
-        orderMapper.update(orders);
-
-        // 通过websocket客户端浏览器推送消息 type orderId content
-        Map map =new HashMap();
-
-        map.put("type", 1); // 1 表示来单提醒 2 表示客户催单
-        map.put("orderId", ordersDB.getId()); // 订单id
-        map.put("content", "订单号："+ outTradeNo);
-
-        String json = JSON.toJSONString(map);
-        webSocketServer.sendToAllClient(json);
-    }
 
     /**
      * 用户端订单分页查询
@@ -557,12 +530,14 @@ public class OrderServiceImpl implements OrderService {
 
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
-        // 更新订单状态,状态转为完成
+        // 更新订单状态,状态转为已完成
         orders.setStatus(Orders.COMPLETED);
         orders.setDeliveryTime(LocalDateTime.now());
 
         orderMapper.update(orders);
     }
+
+
 
     /**
      * 检查客户的收货地址是否超出配送范围
@@ -626,6 +601,61 @@ public class OrderServiceImpl implements OrderService {
             //配送距离超过5000米
             throw new OrderBusinessException("超出配送范围");
         }
+    }
+
+    /**
+     * 支付成功，修改订单状态
+     *
+     * @param outTradeNo
+     */
+    public void paySuccess(String outTradeNo) {
+        // 根据订单号查询订单
+        Orders ordersDB = orderMapper.getByNumber(outTradeNo);
+
+        // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
+        Orders orders = Orders.builder()
+                .id(ordersDB.getId())
+                .status(Orders.TO_BE_CONFIRMED)
+                .payStatus(Orders.PAID)
+                .checkoutTime(LocalDateTime.now())
+                .build();
+
+        orderMapper.update(orders);
+
+        // 通过websocket客户端浏览器推送消息 type orderId content
+        Map map =new HashMap();
+
+        map.put("type", 1); // 1 表示来单提醒 2 表示客户催单
+        map.put("orderId", ordersDB.getId()); // 订单id
+        map.put("content", "订单号："+ outTradeNo);
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+    }
+
+    /**
+     * 客户催单
+     * @param id
+     */
+    public void reminder(Long id) {
+        // 根据id查询订单
+        Orders ordersDB = orderMapper.getById(id);
+
+        // 校验订单是否存在
+        if (ordersDB == null ) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Map map = new HashMap();
+
+        map.put("type", 2); // 1 表示来单提醒 2 表示客户催单
+        map.put("orderId", id);
+        map.put("orderNumber", ordersDB.getNumber());
+
+        String json = JSON.toJSONString(map);
+
+        // 调用websocket向客户端浏览器推送消息
+        webSocketServer.sendToAllClient(json);
     }
 }
 
