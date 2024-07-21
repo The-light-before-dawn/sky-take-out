@@ -172,7 +172,7 @@ public class ReportServiceImpl implements ReportService {
         // 计算订单完成率
         Double orderCompletionRate  = 0.0;
         if (totalOrderCount != 0) {
-            orderCompletionRate = totalOrderCount.doubleValue() / validOrderCount ;
+            orderCompletionRate = validOrderCount.doubleValue() / totalOrderCount.doubleValue();
         }
 
         return OrderReportVO.builder()
